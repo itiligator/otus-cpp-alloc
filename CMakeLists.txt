@@ -9,7 +9,7 @@ set(VERSION_MINOR ${CMAKE_MATCH_1})
 set(PATCH_VERSION "1" CACHE INTERNAL "Patch version")
 
 set(MAIN_APP_NAME "app")
-set(PROJECT_NAME "template")
+set(PROJECT_NAME "alloc")
 
 set(PROJECT_VESRION ${VERSION_MAJOR}.${VERSION_MINOR}.${PATCH_VERSION})
 
@@ -27,23 +27,23 @@ configure_file(version.h.in version.h)
 include_directories(include)
 
 add_executable(${MAIN_APP_NAME} src/main.cpp)
-add_library(somelib include/somelib.h src/somelib.cpp)
+add_library(allocator include/allocator.h src/allocator.cpp)
 
-set_target_properties(${MAIN_APP_NAME} somelib PROPERTIES
+set_target_properties(${MAIN_APP_NAME} allocator PROPERTIES
         CXX_STANDARD 20
         CXX_STANDARD_REQUIRED ON
         )
 
 
 target_link_libraries(${MAIN_APP_NAME} PRIVATE
-        somelib
+        allocator
         )
 
 
 target_compile_options(${MAIN_APP_NAME} PRIVATE
         -Wall -Wextra -pedantic
         )
-target_compile_options(somelib PRIVATE
+target_compile_options(allocator PRIVATE
         -Wall -Wextra -pedantic -Werror
         )
 
@@ -56,7 +56,7 @@ add_executable(
 target_link_libraries(
         gtests
         GTest::gtest_main
-        somelib
+        allocator
 )
 
 include(GoogleTest)
