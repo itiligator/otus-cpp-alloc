@@ -124,6 +124,10 @@ public:
         return std::max(poolSize, std::allocator_traits<Allocator>::max_size());
     }
 
+    // TODO: разобраться
+    using propagate_on_container_copy_assignment = std::false_type; //or take from allocator
+    using propagate_on_container_move_assignment = std::true_type;
+    using propagate_on_container_swap = std::true_type;
 };
 
 template<typename T, typename U, int N, int K>
