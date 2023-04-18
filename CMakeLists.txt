@@ -52,6 +52,7 @@ enable_testing()
 add_executable(
         gtests
         tests/gtest.cc
+        tests/fixedpoolallocatortest.cc
 )
 target_link_libraries(
         gtests
