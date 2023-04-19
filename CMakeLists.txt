@@ -29,8 +29,16 @@ include_directories(include)
 add_executable(${MAIN_APP_NAME} src/main.cpp)
 add_library(allocator include/allocator.h src/allocator.cpp)
 
-set_target_properties(${MAIN_APP_NAME} allocator PROPERTIES
-        CXX_STANDARD 20
+enable_testing()
+
+add_executable(
+        gtests
+        tests/gtest.cc
+        tests/fixedpoolallocatortest.cc
+)
+
+set_target_properties(${MAIN_APP_NAME} allocator gtests PROPERTIES
+        CXX_STANDARD 17
         CXX_STANDARD_REQUIRED ON
         )
 
@@ -47,13 +55,7 @@ target_compile_options(allocator PRIVATE
         -Wall -Wextra -pedantic -Werror
         )
 
-enable_testing()
 
-add_executable(
-        gtests
-        tests/gtest.cc
-        tests/fixedpoolallocatortest.cc
-)
 target_link_libraries(
         gtests
         GTest::gtest_main
