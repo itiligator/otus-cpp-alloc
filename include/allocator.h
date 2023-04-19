@@ -14,12 +14,12 @@ class StoragePlaceholder;
 /**
  *
  * Simple pool allocator, that actually doesn't allocate anything.
- * It contains pool for storing elements. Size of this pool is
+ * It manages pool for storing elements. Size of this pool is
  * predefined by poolSize template parameter.
  *
- * allocate() returns pointer to the free place from the pool.
+ * allocate() returns pointer to the free place in the pool.
  * If n>1 or there is no free space left in pool allocate fallbacks to Allocator.allocate()
- * deallocate() marks pool element as free place or actually deallocates object that
+ * deallocate() marks pool element as free place or deallocates object that
  * previously was allocated by fallback allocator.
  *
  * @tparam T type of the stored elements
@@ -125,7 +125,7 @@ public:
     }
 
     // TODO: разобраться
-    using propagate_on_container_copy_assignment = std::false_type; //or take from allocator
+    using propagate_on_container_copy_assignment = std::false_type;
     using propagate_on_container_move_assignment = std::true_type;
     using propagate_on_container_swap = std::true_type;
 };
@@ -147,10 +147,10 @@ class StoragePlaceholder {
     /**
      * When a placeholder is free, the `next` contains the
      * address of the next placeholder in a list. Otherwise
-     * it is fully used for storing one object
+     * placeholder is fully used for storing one object
      */
     StoragePlaceholder *next;
-    // array needed to make sizeof(StoragePlaceholder<StoredObjectType>) == sizeof(StoredObjectType)
+    // array needed to ensure sizeof(StoragePlaceholder<StoredObjectType>) == sizeof(StoredObjectType)
     char _[(sizeof(StoredObjectType) - sizeof(StoragePlaceholder *)) / sizeof(char)];
 
 };
