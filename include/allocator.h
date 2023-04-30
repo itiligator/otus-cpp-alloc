@@ -95,12 +95,12 @@ public:
     }
 
 
-    StackBasedPoolAllocator() {
+    StackBasedPoolAllocator() noexcept {
         // Chain all placeholders in storage
-        for (int i = 0; i < poolSize - 1; ++i) {
+        // the last one points to nullptr by default
+        for (size_t i = 0; i < poolSize - 1; ++i) {
             storage[i].next = &storage[i + 1];
         }
-        storage[poolSize - 1].next = nullptr;
     };
 
     ~StackBasedPoolAllocator() noexcept = default;
