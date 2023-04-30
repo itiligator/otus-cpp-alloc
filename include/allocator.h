@@ -55,7 +55,7 @@ private:
     };
 
 
-    using Placeholder = StoragePlaceholder<value_type, (sizeof(value_type) > sizeof(void*))>;
+    using Placeholder = StoragePlaceholder<value_type, (sizeof(value_type) > sizeof(void *))>;
 
     static constexpr size_t storage_alignment = std::max(alignof(Placeholder), alignof(value_type));
     alignas(storage_alignment) Placeholder storage[poolSize];
@@ -149,7 +149,9 @@ public:
 
 template<typename T, typename U, int N, int K>
 inline bool operator==(const StackBasedPoolAllocator<T, N> &, const StackBasedPoolAllocator<U, K> &) {
-    return sizeof(StoragePlaceholder<T>) == sizeof(StoragePlaceholder<U>) && N == K;
+    return N == K &&
+           sizeof(StackBasedPoolAllocator<T, N>::Placeholder) == sizeof(StackBasedPoolAllocator<U, K>::Placeholder) &&
+           StackBasedPoolAllocator<T, N>::storage_alignment == StackBasedPoolAllocator<U, K>::storage_alignment;
 }
 
 template<typename T, typename U, int N, int K>
