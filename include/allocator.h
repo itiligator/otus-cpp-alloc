@@ -8,9 +8,6 @@
 #include <memory>
 #include <type_traits>
 
-template<typename StoredObjectType>
-class StoragePlaceholder;
-
 /**
  *
  * Simple pool allocator, that actually doesn't allocate anything.
@@ -34,16 +31,36 @@ public:
     static_assert(std::is_same<typename std::allocator_traits<Allocator>::value_type, value_type>::value);
     typedef T *pointer;
     static_assert(std::is_same<typename std::allocator_traits<Allocator>::pointer, pointer>::value);
-    typedef Allocator fallback_allocator_type;
     typedef const T *const_pointer;
     static_assert(std::is_same<typename std::allocator_traits<Allocator>::const_pointer, const_pointer>::value);
-
+    typedef Allocator fallback_allocator_type;
 
 private:
-    using Placeholder = StoragePlaceholder<value_type>;
-    Placeholder storage[poolSize];
+
+    template<class StoredObjectType, bool Padded = false>
+    struct StoragePlaceholder {
+        /**
+         * When a placeholder is free, the `next` contains the
+         * address of the next free placeholder in a list. Otherwise
+         * memory for placeholder is (probably fully) used for storing one object
+         */
+        StoragePlaceholder *next{nullptr};
+    };
+
+    template<class StoredObjectType>
+    struct StoragePlaceholder<StoredObjectType, true> {
+        StoragePlaceholder *next{nullptr};
+        // additional padding in case of sizeof(Placeholder*) < sizeof(StoredObjectType)
+        char _[(sizeof(StoredObjectType) - sizeof(void *)) / sizeof(char)];
+    };
+
+
+    using Placeholder = StoragePlaceholder<value_type, (sizeof(value_type) > sizeof(void*))>;
+
+    static constexpr size_t storage_alignment = std::max(alignof(Placeholder), alignof(value_type));
+    alignas(storage_alignment) Placeholder storage[poolSize];
     Placeholder *current_free_placeholder = storage;
-    fallback_allocator_type fallback_allocator;
+    fallback_allocator_type fallback_allocator{};
 
 
     bool pointer_to_internal_buffer(pointer p) const {
@@ -139,21 +156,6 @@ template<typename T, typename U, int N, int K>
 inline bool operator!=(const StackBasedPoolAllocator<T, N> &lhs, const StackBasedPoolAllocator<U, K> &rhs) {
     return !(rhs == lhs);
 }
-
-template<typename StoredObjectType>
-class StoragePlaceholder {
-    template<typename T, size_t poolSize, class Allocator>
-    friend class StackBasedPoolAllocator;
-    /**
-     * When a placeholder is free, the `next` contains the
-     * address of the next placeholder in a list. Otherwise
-     * placeholder is fully used for storing one object
-     */
-    StoragePlaceholder *next;
-    // array needed to ensure sizeof(StoragePlaceholder<StoredObjectType>) == sizeof(StoredObjectType)
-    char _[(sizeof(StoredObjectType) - sizeof(StoragePlaceholder *)) / sizeof(char)];
-
-};
 
 
 #endif //ALLOC_ALLOCATOR_H
