@@ -15,7 +15,7 @@
  * predefined by poolSize template parameter.
  *
  * allocate() returns pointer to the free place in the pool.
- * If n>1 or there is no free space left in pool allocate fallbacks to Allocator.allocate()
+ * If n>1 or there is no free space left in pool allocate fallbacks to FallbackAllocator.allocate()
  * deallocate() marks pool element as free place or deallocates object that
  * previously was allocated by fallback allocator.
  *
@@ -23,17 +23,17 @@
  * @tparam poolSize how many elements can be stored in the pool
  */
 
-template<typename T, size_t poolSize, class Allocator = std::allocator<T>>
+template<typename T, size_t poolSize, class FallbackAllocator = std::allocator<T>>
 class StackBasedPoolAllocator {
 public:
 
     typedef T value_type;
-    static_assert(std::is_same<typename std::allocator_traits<Allocator>::value_type, value_type>::value);
+    static_assert(std::is_same<typename std::allocator_traits<FallbackAllocator>::value_type, value_type>::value);
     typedef T *pointer;
-    static_assert(std::is_same<typename std::allocator_traits<Allocator>::pointer, pointer>::value);
+    static_assert(std::is_same<typename std::allocator_traits<FallbackAllocator>::pointer, pointer>::value);
     typedef const T *const_pointer;
-    static_assert(std::is_same<typename std::allocator_traits<Allocator>::const_pointer, const_pointer>::value);
-    typedef Allocator fallback_allocator_type;
+    static_assert(std::is_same<typename std::allocator_traits<FallbackAllocator>::const_pointer, const_pointer>::value);
+    typedef FallbackAllocator fallback_allocator_type;
 
 private:
 
@@ -134,11 +134,11 @@ public:
 
     template<class Type>
     struct rebind {
-        typedef StackBasedPoolAllocator<Type, poolSize, typename std::allocator_traits<Allocator>::template rebind_alloc<Type>> other;
+        typedef StackBasedPoolAllocator<Type, poolSize, typename std::allocator_traits<FallbackAllocator>::template rebind_alloc<Type>> other;
     };
 
     static constexpr size_t max_size() noexcept {
-        return std::max(poolSize, std::allocator_traits<Allocator>::max_size());
+        return std::max(poolSize, std::allocator_traits<FallbackAllocator>::max_size());
     }
 
     // TODO: разобраться
@@ -147,15 +147,23 @@ public:
     using propagate_on_container_swap = std::true_type;
 };
 
-template<typename T, typename U, int N, int K>
-inline bool operator==(const StackBasedPoolAllocator<T, N> &, const StackBasedPoolAllocator<U, K> &) {
-    return N == K &&
-           sizeof(StackBasedPoolAllocator<T, N>::Placeholder) == sizeof(StackBasedPoolAllocator<U, K>::Placeholder) &&
-           StackBasedPoolAllocator<T, N>::storage_alignment == StackBasedPoolAllocator<U, K>::storage_alignment;
+template<typename T, class FallbackAllocator>
+class StackBasedPoolAllocator<T, 0, FallbackAllocator> : FallbackAllocator {
+};
+
+template<typename T, typename U, int N, int K, typename FallbackAllocatorT, typename FallbackAllocatorU>
+inline bool operator==(const StackBasedPoolAllocator<T, N, FallbackAllocatorT> &,
+                       const StackBasedPoolAllocator<U, K, FallbackAllocatorU> &) {
+    using lhs = StackBasedPoolAllocator<T, N, FallbackAllocatorT>;
+    using rhs = StackBasedPoolAllocator<U, K, FallbackAllocatorU>;
+    return N == K && std::is_same_v<FallbackAllocatorU, FallbackAllocatorT> &&
+           std::max(sizeof(lhs::Placeholder), lhs::storage_alignment) ==
+           std::max(sizeof(rhs::Placeholder), rhs::storage_alignment);
 }
 
-template<typename T, typename U, int N, int K>
-inline bool operator!=(const StackBasedPoolAllocator<T, N> &lhs, const StackBasedPoolAllocator<U, K> &rhs) {
+template<typename T, typename U, int N, int K, typename FallbackAllocatorT, typename FallbackAllocatorU>
+inline bool operator!=(const StackBasedPoolAllocator<T, N, FallbackAllocatorT> &rhs,
+                       const StackBasedPoolAllocator<U, K, FallbackAllocatorU> &lhs) {
     return !(rhs == lhs);
 }
 
