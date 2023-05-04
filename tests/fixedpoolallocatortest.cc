@@ -3,19 +3,17 @@
 //
 
 #include <gtest/gtest.h>
-#include "allocator.h"
+#include "PoolAllocator.h"
 
 
 
 
 TEST(StackBasedPoolAllocator, NumberOfAllocatedElements) {
-    struct DDD{
-        char s[9];
-    };
-    std::cout << alignof(DDD) << std::endl;
     constexpr size_t poolSize{10};
-    auto alloc = StackBasedPoolAllocator<DDD, 11>();
+    auto alloc = LocalPoolAllocatorExtended<char, poolSize>();
     std::set<char*> fetched_pointers{};
+    for (size_t i = 0; i < poolSize; ++i) {
 
+    }
 }
 

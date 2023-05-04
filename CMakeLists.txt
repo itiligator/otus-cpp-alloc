@@ -27,7 +27,7 @@ configure_file(version.h.in version.h)
 include_directories(include)
 
 add_executable(${MAIN_APP_NAME} src/main.cpp)
-add_library(allocator include/allocator.h src/allocator.cpp)
+add_library(allocator include/LocalPool.h include/IPool.h include/PoolAllocator.h)
 
 enable_testing()
 
@@ -38,7 +38,8 @@ add_executable(
 )
 
 set_target_properties(${MAIN_APP_NAME} allocator gtests PROPERTIES
-        CXX_STANDARD 17
+        LINKER_LANGUAGE CXX
+        CXX_STANDARD 20
         CXX_STANDARD_REQUIRED ON
         )
 
